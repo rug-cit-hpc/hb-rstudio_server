@@ -1,0 +1,21 @@
+---
+
+batch_connect:
+  template: "basic"
+script:
+  queue_name: <%= custom_queue.blank? ? "regular" : custom_queue.strip %>
+  native:
+    <%- if custom_queue == 'gpu' or custom_queue == 'gpushort' -%>
+    - '--gres'
+    - 'gpu:<%= gpu_type %>:1'
+    <%- end -%>
+    <%- if pg_email_on_started and not pg_email_user.blank? -%>
+    - "--mail-type=BEGIN"
+    - "--mail-user=<%= pg_email_user %>"
+    <%- end -%>
+    - "-c"
+    - "<%= num_cores.blank? ? 1 : num_cores.to_i %>"
+    - "--mem"
+    - "<%= memory.blank? ? 2000 : memory.to_i * 1000 %>"
+    - "-t"
+    - "<%= walltime %>"
