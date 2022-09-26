@@ -20,7 +20,7 @@ setup_env () {
 
   module load <%= context.version %>
   APPTAINER_BINDPATH="/etc,/media,/mnt,/opt,/run,/srv,/usr,/var,/users,/apps,/software,/data,/scratch"
-  RSTUDIO_SERVER_IMAGE="/data/public/Singularity/r<%= r_version %>server.sif"
+  RSTUDIO_SERVER_IMAGE="/data/public/Singularity/rserver.sif"
   
   echo "PATH: " $PATH
  
@@ -106,6 +106,7 @@ echo "Starting up rserver..."
 SINGULARITYENV_LD_LIBRARY_PATH="$LD_LIBRARY_PATH" singularity run --contain \
  -B $TMPDIR:/tmp \
  -B $WORKING_DIR \
+ --app rserver<%= r_version %> \
  "$RSTUDIO_SERVER_IMAGE" \
  --www-port "${port}" \
  --auth-none 1 \

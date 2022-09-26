@@ -1,19 +1,4 @@
 <%-
-  cmd = "sinfo -ho %R"
-  begin
-    output, status = Open3.capture2e(cmd)
-    if status.success?
-      partitions = output.split("\n").map(&:strip).reject(&:blank?).sort
-    else
-      raise output
-    end
-  rescue => e
-    partitions = []
-    error = e.message.strip
-  end
--%>
-
-<%-
     paths = []
     paths << Pathname.new("/home/#{User.new.name}")
     paths << Pathname.new("/data/#{User.new.name}")
@@ -29,64 +14,42 @@ cluster:
   - "peregrine"
 
 form:
+  - node_type
   - version
-  - custom_queue
-  - gpu_type
   - walltime
   - num_cores
   - memory
+  - start_folder
   - pg_email_on_started
   - pg_email_user
   
-
 attributes:
-  version:
-    label: "R version"
-    help: "This defines the version of R you want to load."
+  node_type:
+    label: Node Type
+    help: |
+      Select the type of node you would like to use. For information on the different options, please see 
+      [our wiki](https://wiki.hpc.rug.nl/peregrine/introduction/cluster_description#compute_nodes)
     widget: select
+    options:
+      - [ "Regular", "regular" ]
+      - [ "Himem", "himem" ]
+      - [ "GPU (K40)", "gpuk40" ]
+      - [ "GPU (V100)", "gpuv100" ]
+      - [ "GELIFES", "gelifes" ]
+
+  version:
+    widget: select
+    label: R version
+    help: |
+        Select one of the R versions from the dropdown.
     options:
       - [ "4.0.0", "RStudio-Server/1.3.1093-foss-2020a-Java-11-R-4.0.0" ]
 #      - [ "4.1.0", "RStudio-Server/1.4.1717-foss-2021a-Java-11-R-4.1.0" ]
 
-  custom_queue:
-    label: Partition
-    help: Please select a partition from the drop-down menu.
-    widget: select
-    options:
-      - [ "Regular", "regular", data-value-num-cores: 1, data-max-num-cores: 28, data-hide-gpu-type: true]
-      - [ "Himem", "himem", data-min-num-cores: 1, data-max-num-cores: 48, data-hide-gpu-type: true]
-      - [ "GPU Short", "gpushort", data-min-num-cores: 12, data-max-num-cores: 12,  ]
-      - [ "GPU Long", "gpu", data-min-num-cores: 12, data-max-num-cores: 12 ]
-      - [ "test", "test"]
-
-  gpu_type:
-    widget: "select"
-    label: "GPU Type"
-    help: |
-      Select the GPU type. Please see [this page](https://wiki.hpc.rug.nl/peregrine/jobs/advanced_topics/running_jobs_on_gpus) for more information on the GPUs available in Peregrine.
-
-    options:
-      - [ "NVidia K40", "k40" ]
-      - [ "NVidia V100", "v100" ]
-
   walltime:
-    label: Walltime
+    label: Wall time
     help: "Please give the wall time in the SLURM format, D-HH:MM:SS"
     widget: "text_field"
-
-  num_cores:
-    widget: "number_field"
-    label: "Number of cores"
-    value: 1
-    help: |
-      Number of cores on node type.
-    min: 1
-  <%- if partitions == "himem" -%>
-    max: 48
-  <%- else -%>
-    max: 24
-  <%- end -%>
-    step: 1
 
   memory:
     label: Memory
@@ -94,7 +57,28 @@ attributes:
     widget: 'number_field'
     value: 2
     min: 1
-    max: 128
+    step: 1
+
+  start_folder:
+    label: Notebook root folder
+    help: Where should the jupyter server start?
+  <%- if paths.blank? -%>
+    widget: text_field
+  <%- else -%>
+    widget: select
+    options:
+    <%- paths.each do |q| -%>
+      - [ "<%= q %>", "<%= q %>" ]
+    <%- end -%>
+  <%- end -%>
+
+  num_cores:
+    widget: number_field
+    label: Number of CPU cores
+    value: 1
+    help: |
+      Select the number of CPU cores.
+    min: 1
     step: 1
 
   pg_email_on_started:
@@ -105,9 +89,8 @@ attributes:
     options:
       - ["No", "no", data-hide-pg-email-user: true]
       - ["Yes", "yes"]
-  
+
   pg_email_user:
     label: Email
     help: "Your email for notifications"
     widget: "text_field"
-    
