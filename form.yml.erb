@@ -1,17 +1,16 @@
 <%-
+    app_name = "RStudio"
     paths = []
-    paths << Pathname.new("/home/#{User.new.name}")
-    paths << Pathname.new("/data/#{User.new.name}")
     paths << Pathname.new("/scratch/#{User.new.name}")
 
-    projects = User.new.groups.map(&:name).grep(/^pg-./)
+    projects = User.new.groups.map(&:name).grep(/^hb-./)
 
-    paths.concat projects.map { |p| Pathname.new("/data/#{p}")  }
+    paths.concat projects.map { |p| Pathname.new("/scratch/#{p}")  }
 -%>
-
 ---
+title: <%= app_name %>
 cluster:
-  - "peregrine"
+  - "login1"
 
 form:
   - node_type
@@ -19,38 +18,47 @@ form:
   - walltime
   - num_cores
   - memory
-  - start_folder
-  - pg_email_on_started
-  - pg_email_user
-  
+  - bc_vnc_resolution
+
 attributes:
   node_type:
     label: Node Type
     help: |
-      Select the type of node you would like to use. For information on the different options, please see 
-      [our wiki](https://wiki.hpc.rug.nl/peregrine/introduction/cluster_description#compute_nodes)
+      Select the type of node you would like to use. 
+      For information on the different options, please see 
+      [our wiki](https://wiki.hpc.rug.nl/habrok/introduction/cluster_description#compute_nodes)
     widget: select
     options:
       - [ "Regular", "regular" ]
       - [ "Himem", "himem" ]
-      - [ "GPU (K40)", "gpuk40" ]
+      - [ "GPU (A100_1)", "gpua100" ]
+      - [ "GPU (A100_2)", "gpua100.20gb" ]
       - [ "GPU (V100)", "gpuv100" ]
       - [ "GELIFES", "gelifes" ]
 
   version:
-    widget: select
-    label: R version
+    widget: "select"
+    label: "RStudio version"
     help: |
-        Select one of the R versions from the dropdown.
+      Select one of the RStudio versions from the dropdown.
     options:
-      - [ "4.0.0", "RStudio-Server/1.3.1093-foss-2020a-Java-11-R-4.0.0" ]
-#      - [ "4.1.0", "RStudio-Server/1.4.1717-foss-2021a-Java-11-R-4.1.0" ]
+      - [   "R 4.2.1","RStudio-Server/2022.07.2+576-foss-2022a-Java-11-R-4.2.1",
+            data-option-for-node-type-gpua100: false,
+            data-option-for-node-type-gpua100.20gb: false,
+            data-option-for-node-type-gpuv100: false
+        ]
+      - [   "R 4.2.1 (GPU)","RStudio-Server/2022.07.2+576-foss-2022a-Java-11-R-4.2.1 CUDA/11.7.0",
+            data-option-for-node-type-regular: false, 
+            data-option-for-node-type-himem: false, 
+            data-option-for-node-type-parallel: false,
+            data-option-for-node-type-gelifes: false
+        ]
 
   walltime:
     label: Wall time
     help: "Please give the wall time in the SLURM format, D-HH:MM:SS"
     widget: "text_field"
-
+    
   memory:
     label: Memory
     help: Amount of memory requested, in GB
@@ -59,38 +67,16 @@ attributes:
     min: 1
     step: 1
 
-  start_folder:
-    label: Notebook root folder
-    help: Where should the jupyter server start?
-  <%- if paths.blank? -%>
-    widget: text_field
-  <%- else -%>
-    widget: select
-    options:
-    <%- paths.each do |q| -%>
-      - [ "<%= q %>", "<%= q %>" ]
-    <%- end -%>
-  <%- end -%>
-
   num_cores:
     widget: number_field
     label: Number of CPU cores
     value: 1
+    id: 'num_cores'
     help: |
       Select the number of CPU cores.
     min: 1
     step: 1
+    max: 128
 
-  pg_email_on_started:
-    label: "Email notification"
-    help: |
-      Would you like to be notified via email when your session starts?
-    widget: "select"
-    options:
-      - ["No", "no", data-hide-pg-email-user: true]
-      - ["Yes", "yes"]
-
-  pg_email_user:
-    label: Email
-    help: "Your email for notifications"
-    widget: "text_field"
+  bc_vnc_resolution:
+    required: true

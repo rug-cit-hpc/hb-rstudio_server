@@ -4,7 +4,7 @@ category: Interactive Apps
 subcategory: Servers
 role: batch_connect
 description: |
-  This app will launch [RStudio Server] an IDE for [R] on the Peregrine cluster.
+  This app will launch [RStudio Server] an IDE for [R] on the Habrok cluster.
 
   [RStudio Server]: https://www.rstudio.com/products/rstudio-server/
   [R]: https://www.r-project.org/

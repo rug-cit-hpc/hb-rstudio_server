@@ -13,4 +13,4 @@ export RSTUDIO_PASSWORD="${password}"
   require 'securerandom'
   csrftoken=SecureRandom.uuid
 -%>
-export csrftoken="<%= csrftoken %>"
+export csrf_token="<%= csrftoken %>"

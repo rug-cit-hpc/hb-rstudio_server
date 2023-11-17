@@ -1,115 +1,64 @@
 #!/usr/bin/env bash
 
-<%-
-  session_dir = session.staged_root
-  tutorial_dir = session.staged_root.join('ParallelR')
-  r_match = /^RStudio-Server\/(.+)\-(.+)\-(.+)\-(.+)\-(.+)\-(.+)\-(.+)/.match(context.version)
-  rstudio_version = r_match[1]
-  foss_version = r_match[3]
-  r_version = r_match[7] unless r_match[7].nil?
-%>
-
-echo "RStudio Version: " <%= rstudio_version %>
-echo "foss: " <%= foss_version %>
-echo "R Version: "<%= r_version %>
-# Load the required environment
-setup_env () {
-  module purge
-
-  # The rserver container module should set these environment variables:
-
-  module load <%= context.version %>
-  APPTAINER_BINDPATH="/etc,/media,/mnt,/opt,/run,/srv,/usr,/var,/users,/apps,/software,/data,/scratch"
-  RSTUDIO_SERVER_IMAGE="/data/public/Singularity/rserver.sif"
+# Clean the environment
+module purge
   
-  echo "PATH: " $PATH
- 
-  # APPTAINER_BINDPATH is being used to bind all RStudio's requirements from
-  # the host into the guest, and so those values may vary between sites.
-}
-setup_env
-
-# prepare the host directories and files
-
-export WORKING_DIR="<%= session_dir %>"
-
-# sanatize APPTAINER_BINDPATH for mounts that don't exist or that you
-# have no access to.
 set -x
-if [[ "${APPTAINER_BINDPATH:-x}" != "x" ]]; then
-
-  SAFE_BINDPATH=""
-  IFS=',' read -r -a array <<< "$APPTAINER_BINDPATH"
-  for dir in "${array[@]}"; do
-    [ -d "$dir" ] && [ "$dir" != "/etc" ] && SAFE_BINDPATH="$dir,$SAFE_BINDPATH"
-  done
-
-  export APPTAINER_BINDPATH=$(echo $SAFE_BINDPATH | sed 's/,$//')
-  export SINGULARITY_BINDPATH="$APPTAINER_BINDPATH"
-  echo "Singularity Bindpath: " $SINGULARITY_BINDPATH
-fi
-
 #
 # Start RStudio Server
 #
+  
+# Load the required environment
+module load <%= context.version %>
+  
 # PAM auth helper used by RStudio
-export RSTUDIO_AUTH="$WORKING_DIR/bin/auth"
-
+export RSTUDIO_AUTH="${PWD}/bin/auth"
+  
 # Generate an `rsession` wrapper script
-export RSESSION_WRAPPER_FILE="$WORKING_DIR/rsession.sh"
+export RSESSION_WRAPPER_FILE="${PWD}/rsession.sh"
 (
 umask 077
-sed 's/^ \{2\}//' > "$WORKING_DIR/rsession.sh" << EOL
+sed 's/^ \{2\}//' > "${RSESSION_WRAPPER_FILE}" << EOL
   #!/usr/bin/env bash
 
   # Log all output from this script
-  export RSESSION_LOG_FILE="$WORKING_DIR/rsession.log"
-
+  export RSESSION_LOG_FILE="${PWD}/rsession.log"
+  
   exec &>>"\${RSESSION_LOG_FILE}"
-
-  # rsession.sh doesn't share the same env as the outside script, so these
-  # need to be set explicitly
-  export R_LIBS_SITE="${R_LIBS_SITE}"
-  export TZ="Europe/Amsterdam"
-  export MODULEPATH_ROOT="$MODULEPATH_ROOT"
-  export MODULEPATH="$MODULEPATH"
-  export LMOD_PKG="$LMOD_PKG"
-
+  
   # Launch the original command
   echo "Launching rsession..."
   set -x
   exec rsession --r-libs-user "${R_LIBS_USER}" "\${@}"
 EOL
 )
-chmod 700 "$WORKING_DIR/rsession.sh"
-
+chmod 700 "${RSESSION_WRAPPER_FILE}"
+  
 # Set working directory to home directory
-echo "Singularity Home: " $SINGULARITY_HOME
-cd "${SINGULARITY_HOME}"
-
-# Output debug info
-module list
-hostname
-
-echo $SINGULARITY_BINDPATH
-
-set -x
+cd "${HOME}"
+  
+export TMPDIR="$(mktemp -d)"
+  
+mkdir -p "$TMPDIR/rstudio-server"
+python -c 'from uuid import uuid4; print(uuid4())' > "$TMPDIR/rstudio-server/secure-cookie-key"
+chmod 0600 "$TMPDIR/rstudio-server/secure-cookie-key"
+  
+export DATABASE_CONFIG_FILE="${TMPDIR}/rstudio-server/database.config"
+echo "directory=${TMPDIR}/rstudio-server" > ${DATABASE_CONFIG_FILE}
+chmod 700 "${DATABASE_CONFIG_FILE}"
+  
 # Launch the RStudio Server
 echo "Starting up rserver..."
-
-# --contain is used to override the bindpaths specified in OSC's
-# singularity.conf which would otherwise conflict in /etc
-# using --contain requires us to bind mount in addition directories including
-# /dev and /proc
-# optional_tutorial_home_bind is used when include_tutorials to change the home
-# directory to get a clean environment without clobbering files
-SINGULARITYENV_LD_LIBRARY_PATH="$LD_LIBRARY_PATH" singularity run --contain \
- -B $TMPDIR:/tmp \
- -B $WORKING_DIR \
- --app rserver<%= r_version %> \
- "$RSTUDIO_SERVER_IMAGE" \
+  
+rserver \
  --www-port "${port}" \
+ --rsession-path "${RSESSION_WRAPPER_FILE}" \
+ --server-data-dir "${TMPDIR}/rstudio-server/" \
+ --server-pid-file "${TMPDIR}/rstudio-server/rserver.pid" \
+ --database-config-file "${DATABASE_CONFIG_FILE}" \
  --auth-none 1 \
  --auth-pam-helper-path "${RSTUDIO_AUTH}" \
  --auth-encrypt-password 0 \
- --rsession-path "${RSESSION_WRAPPER_FILE}"
+ --server-user ${USER}
+
+echo 'exited...'
