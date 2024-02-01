@@ -1,5 +1,5 @@
 <script>
-  document.cookie = "csrf-token=<%= csrf_token %>; path=/rnode/<%= host %>/<%= port %>; secure";
+  document.cookie = "csrf-token=<%= csrf_token %>; path=/rnode/<%= host %>/<%= port %>;SameSite=strict;secure";
 </script>
 <form action="/rnode/<%= host %>/<%= port %>/auth-do-sign-in" method="post" target="_blank">
   <input type="hidden" name="username" value="<%= ENV["USER"] %>">

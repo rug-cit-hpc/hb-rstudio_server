@@ -12,17 +12,18 @@ set -x
 module load <%= context.version %>
   
 # PAM auth helper used by RStudio
-export RSTUDIO_AUTH="${PWD}/bin/auth"
+export WORKING_DIR="<%= session.staged_root %>"
+export RSTUDIO_AUTH="${WORKING_DIR}/bin/auth"
   
 # Generate an `rsession` wrapper script
-export RSESSION_WRAPPER_FILE="${PWD}/rsession.sh"
+export RSESSION_WRAPPER_FILE="${WORKING_DIR}/rsession.sh"
 (
 umask 077
 sed 's/^ \{2\}//' > "${RSESSION_WRAPPER_FILE}" << EOL
   #!/usr/bin/env bash
 
   # Log all output from this script
-  export RSESSION_LOG_FILE="${PWD}/rsession.log"
+  export RSESSION_LOG_FILE="${WORKING_DIR}/rsession.log"
   
   exec &>>"\${RSESSION_LOG_FILE}"
   
@@ -56,7 +57,7 @@ rserver \
  --server-data-dir "${TMPDIR}/rstudio-server/" \
  --server-pid-file "${TMPDIR}/rstudio-server/rserver.pid" \
  --database-config-file "${DATABASE_CONFIG_FILE}" \
- --auth-none 1 \
+ --auth-none 0 \
  --auth-pam-helper-path "${RSTUDIO_AUTH}" \
  --auth-encrypt-password 0 \
  --server-user ${USER}
