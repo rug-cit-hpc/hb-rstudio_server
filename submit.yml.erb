@@ -19,7 +19,7 @@
         end
     elsif node_type == 'himem'
         partition = 'himemmedium'
-    elsif node_type == 'gpua100' || node_type == 'gpua100.20gb' || node_type == 'gpuv100'
+    elsif node_type == 'gpua100' || node_type == 'gpuv100'
         gpu_type_match = /^gpu(.*)/.match(node_type)
         gpu_type = gpu_type_match[1]
         if time < 7200
