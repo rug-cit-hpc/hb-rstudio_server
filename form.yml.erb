@@ -15,7 +15,7 @@ cluster: "login1"
 form:
   - node_type
   - version
-  - walltime
+  - num_hours
   - num_cores
   - memory
   - bc_vnc_resolution
@@ -50,11 +50,15 @@ attributes:
             data-option-for-node-type-gelifes: false
         ]
 
-  walltime:
-    label: Wall time
-    help: "Please give the wall time in the SLURM format, D-HH:MM:SS"
-    widget: "text_field"
-    
+  num_hours:
+    label: Number of hours
+    widget: 'number_field'
+    help: "Please give the maximum wall time in hours"
+    value: 2
+    min: 1
+    step: 1
+    max: 12
+
   memory:
     label: Memory
     help: Amount of memory requested, in GB
