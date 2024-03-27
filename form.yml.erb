@@ -7,10 +7,10 @@
 
     paths.concat projects.map { |p| Pathname.new("/scratch/#{p}")  }
 -%>
+
 ---
 title: <%= app_name %>
-cluster:
-  - "login1"
+cluster: "login1"
 
 form:
   - node_type
@@ -24,15 +24,13 @@ attributes:
   node_type:
     label: Node Type
     help: |
-      Select the type of node you would like to use. 
-      For information on the different options, please see 
+      Select the type of node you would like to use. For information on the different options, please see 
       [our wiki](https://wiki.hpc.rug.nl/habrok/introduction/cluster_description#compute_nodes)
     widget: select
     options:
       - [ "Regular", "regular" ]
       - [ "Himem", "himem" ]
-      - [ "GPU (A100_1)", "gpua100" ]
-      - [ "GPU (A100_2)", "gpua100.20gb" ]
+      - [ "GPU (A100)", "gpua100" ]
       - [ "GPU (V100)", "gpuv100" ]
       - [ "GELIFES", "gelifes" ]
 
@@ -44,13 +42,11 @@ attributes:
     options:
       - [   "R 4.2.1","RStudio-Server/2022.07.2+576-foss-2022a-Java-11-R-4.2.1",
             data-option-for-node-type-gpua100: false,
-            data-option-for-node-type-gpua100.20gb: false,
             data-option-for-node-type-gpuv100: false
         ]
       - [   "R 4.2.1 (GPU)","RStudio-Server/2022.07.2+576-foss-2022a-Java-11-R-4.2.1 CUDA/11.7.0",
             data-option-for-node-type-regular: false, 
             data-option-for-node-type-himem: false, 
-            data-option-for-node-type-parallel: false,
             data-option-for-node-type-gelifes: false
         ]
 
