@@ -41,7 +41,7 @@ cd "${HOME}"
 export TMPDIR="$(mktemp -d)"
   
 mkdir -p "$TMPDIR/rstudio-server"
-python -c 'from uuid import uuid4; print(uuid4())' > "$TMPDIR/rstudio-server/secure-cookie-key"
+python3 -c 'from uuid import uuid4; print(uuid4())' > "$TMPDIR/rstudio-server/secure-cookie-key"
 chmod 0600 "$TMPDIR/rstudio-server/secure-cookie-key"
   
 export DATABASE_CONFIG_FILE="${TMPDIR}/rstudio-server/database.config"
