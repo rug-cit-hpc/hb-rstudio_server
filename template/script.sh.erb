@@ -26,6 +26,17 @@ sed 's/^ \{2\}//' > "${RSESSION_WRAPPER_FILE}" << EOL
   export RSESSION_LOG_FILE="${WORKING_DIR}/rsession.log"
   
   exec &>>"\${RSESSION_LOG_FILE}"
+
+  # rsession.sh doesn't share the same env as the outside script, so these
+  # need to be set explicitly
+  # All variables related to R libraries, underlying binary libraries
+  # and building on top of these have to be included.
+  export R_LIBS_SITE="${R_LIBS_SITE}"
+  export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}"
+  export LIBRARY_PATH="${LIBRARY_PATH}"
+  export CPATH="${CPATH}"
+  export CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}"
+  export PYTHONPATH="${PYTHONPATH}"
   
   # Launch the original command
   echo "Launching rsession..."
